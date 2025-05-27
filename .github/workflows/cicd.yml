@@ -26,24 +26,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Trivy Installation
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-        
-        # Create directory for keyrings if it doesn't exist
-        sudo mkdir -p /etc/apt/keyrings
-        
-        # Download and add Trivy's GPG key
-        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /etc/apt/keyrings/trivy.gpg
-        
-        # Add Trivy repository
-        echo "deb [signed-by=/etc/apt/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | \
-          sudo tee /etc/apt/sources.list.d/trivy.list
-        
-        # Update package list and install Trivy
-        sudo apt-get update -y
-        sudo apt-get install -y trivy
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'        # Changed from 'table' to 'json'
+        output: 'fs-report.json'  # Specify the output file
+        exit-code: '1'
+        ignore-unfixed: true
+        severity: 'CRITICAL,HIGH'
 
     - name: Trivy FS Scan
       run: trivy fs --format table -o fs-report.json .
